@@ -1,0 +1,40 @@
+name: CodeQL
+
+on:
+  push:
+  pull_request:
+  schedule:
+    - cron: '23 4 * * 1'
+
+permissions:
+  actions: read
+  contents: read
+  # Add security-events: write if you change analyze.upload to 'always' on a
+  # public repository or a repository licensed for GitHub Code Security.
+
+jobs:
+  analyze:
+    name: codeql-security-analysis
+    runs-on: ubuntu-latest
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v7
+        with:
+          fetch-depth: 0
+
+      - name: Initialize CodeQL
+        uses: github/codeql-action/init@v4
+        with:
+          languages: javascript-typescript
+          queries: security-extended
+
+      - name: Perform CodeQL analysis
+        uses: github/codeql-action/analyze@v4
+        with:
+          output: ${{ runner.temp }}/codeql-results
+          upload: never
+
+      - name: Enforce the CodeQL high-severity threshold
+        env:
+          CODEQL_BLOCK_SEVERITY: '7.0'
+        run: node scripts/check-codeql-sarif.js "$RUNNER_TEMP/codeql-results"
